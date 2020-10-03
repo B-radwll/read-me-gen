@@ -1,89 +1,88 @@
-var inquirer = require("inquirer");
-var generateMarkdown = require("./utils/generateMarkdown");
-var axios = require("axios");
-var fs = require("fs");
-
-// Require all npm packages and files
+const inquirer = require("inquirer");
+const fs = require('fs');
+const axios = require("axios");
+const generate = require('./utils/generateMarkdown');
 
 const questions = [
-    // questions to user using "inquirer"
     {
         type: "input",
-        message: "What is your GitHub user name?",
-        name: "username"
-    },
-
-    {
-        type: "input",
-        message: "What is your project Title?",
         name: "title",
-        default: "Generate a README.md file "
+        message: "What is your project title?"
     },
-
     {
         type: "input",
-        message: "What is your repo called?",
-        name: "repo",
-        default: "GoodREADMEGenerator"
+        name: "badge",
+        message: "Please provide the badges links that you want"
     },
-
     {
         type: "input",
-        message: "How do you describe your Project?.",
-        name: "desc",
-        default:
-            " This application will generate a README.md file for your current project"
+        name: "description",
+        message: "Please provide your project's description"
     },
-
     {
         type: "input",
-        message: "What are the steps required to install your project?",
-        name: "install",
-        default: "Step1: Run npm install and Step2: Run node index.js"
+        name: "installation",
+        message: "Please provide the installation instructions"
     },
-
     {
         type: "input",
-        message: "Write instructions for using your project.",
         name: "usage",
-        default:
-            "1.Run node index.js 2.Answers the questions 3.The README.md file will be created. "
+        message: "Please provide the project usage"
     },
-
     {
         type: "input",
-        message:
-            "please enter git hub user names of the contributor if any (If there are mulitple contributor, seperate names with comma and no space! )",
-        name: "contributors",
-        default: " Robert McKenney, Abdul Amoud and Igor Calvacante"
+        name: "licence",
+        message: "Please provide the project licence or your badge link"
     },
-
     {
         type: "input",
-        message: "Provide examples on how to run tests.",
+        name: "contributing",
+        message: "Please provide the contributing parties"
+    },
+    {
+        type: "input",
         name: "test",
-        default: "Insert your tests sample here..."
-    }
+        message: "Please provide the project tests"
+    },
+    {
+        type: "input",
+        name: "username",
+        message: "What is your github user name?"
+    },
+    {
+        type: "input",
+        name: "repo",
+        message: "What is your repo link?"
+    },
 ];
-//answers.username
+
+inquirer
+    .prompt(questions)
+    .then(function (data) {
+        const queryUrl = `https://api.github.com/users/${data.username}`;
+
+        axios.get(queryUrl).then(function (res) {
+
+            const githubInfo = {
+                githubImage: res.data.avatar_url,
+                email: res.data.email,
+                profile: res.data.html_url,
+                name: res.data.name
+            };
+
+            fs.writeFile("README.md", generate(data, githubInfo), function (err) {
+                if (err) {
+                    throw err;
+                };
+
+                console.log("New README file created with success!");
+            });
+        });
+
+    });
 
 function init() {
-    inquirer.prompt(questions).then(answers => {
-        console.log(answers);
-        axios
-            .get("https://api.github.com/users/" + answers.username)
-            .then(response => {
-                console.log(response);
-                var imageURL = response.data.avatar_url;
-                answers.image = imageURL;
-                console.log(imageURL);
-                fs.writeFile("README.md", generateMarkdown(answers), function (err) {
-                    if (err) {
-                        throw err;
-                    }
-                });
-            });
-    });
+
 }
 
 init();
